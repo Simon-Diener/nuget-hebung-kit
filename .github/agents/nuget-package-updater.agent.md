@@ -25,6 +25,23 @@ that is serialized by the orchestrator).
   stop, report the exact error, and do not force a workaround that hides it.
 - **Feature branch only.** Never commit to a protected branch.
 
+## Allowed commands (pre-approved by the kit)
+
+`scripts/grant-permissions.ps1` (run by `bootstrap.ps1`, unless
+`-SkipPermissions`) pre-approves the routine execution commands you need so you
+do not have to ask each time:
+
+- **Build / test:** `dotnet restore`, `dotnet build`, `dotnet test` (unit tests
+  only — no integration tests against shared systems).
+- **Edits:** `.csproj` (and, only when the prompt says you own that step, the
+  central `Directory.Packages.props`) via the `write` approval.
+- **Commit:** `git add`, `git commit` — one logical bump per commit.
+
+**Still gated (will prompt — do not work around):** `git push` and any branch
+operation, `git checkout` of a protected branch, and anything not in the list.
+The allow-list is per repo location and shared with the read-only investigator,
+so you may see its `dotnet list` / `dotnet package search` approved too.
+
 ## What to do, per bump (bottom-up within your lane)
 
 1. Apply the version change (in the `.csproj`, or via CPM `VersionOverride` if the

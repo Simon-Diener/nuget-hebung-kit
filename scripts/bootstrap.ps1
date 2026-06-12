@@ -4,9 +4,13 @@
 
 .DESCRIPTION
   Copies this kit's skills, custom agents, hooks, and risk knowledge base into a
-  target repo, ensures an AGENTS.md operating contract exists, and creates the
-  persistence layout. After running, open the target repo, start `copilot`, and
-  run /nuget-hebung. Idempotent: existing files are not overwritten unless -Force.
+  target repo, ensures an AGENTS.md operating contract exists, creates the
+  persistence layout, and grants the NuGet Hebung subagent allow-list for the
+  target location in your Copilot CLI permissions store (so the subagents stop
+  re-prompting for routine restore/build/test/search + git add/commit + file
+  writes; git push stays gated). After running, open the target repo, start
+  `copilot`, and run /nuget-hebung. Idempotent: existing files are not
+  overwritten unless -Force.
 
 .PARAMETER TargetRepo
   Absolute path to the repository you want to prepare.
@@ -14,12 +18,16 @@
 .PARAMETER Force
   Overwrite existing kit files in the target (skills/agents/hooks/risk KB).
 
+.PARAMETER SkipPermissions
+  Do not touch the Copilot CLI permissions store (skip granting the allow-list).
+
 .EXAMPLE
   ./scripts/bootstrap.ps1 -TargetRepo C:\dev\Repos\nuget-hebung-demo
 #>
 param(
     [Parameter(Mandatory = $true)] [string] $TargetRepo,
-    [switch] $Force
+    [switch] $Force,
+    [switch] $SkipPermissions
 )
 
 $ErrorActionPreference = 'Stop'
@@ -92,6 +100,17 @@ $giLine = 'tasks/'
 if (-not (Test-Path $gi) -or -not (Select-String -Path $gi -SimpleMatch $giLine -Quiet)) {
     Add-Content -Path $gi -Value "`n# Copilot scratch (context-guard state, throwaway notes)`ntasks/"
     Write-Host "updated: .gitignore (+ tasks/)"
+}
+
+# 7. Grant the NuGet Hebung subagent allow-list for the target location, so the
+#    subagents stop re-prompting for routine restore/build/test/search + git
+#    add/commit + file writes. git push / branch ops stay gated. Skip with
+#    -SkipPermissions. This writes to your user-level permissions store
+#    (~/.copilot/permissions-config.json or $COPILOT_HOME), not into the repo.
+if ($SkipPermissions) {
+    Write-Host "skipped: permissions allow-list  [run scripts/grant-permissions.ps1 later, or omit -SkipPermissions]"
+} else {
+    & (Join-Path $PSScriptRoot 'grant-permissions.ps1') -TargetRepo $TargetRepo
 }
 
 Write-Host "`nDone. Next steps:"

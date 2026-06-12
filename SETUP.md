@@ -55,8 +55,11 @@ cd nuget-hebung-kit
 
 It copies the skills, the model-pinned agents, the context-guard hook, and the
 risk knowledge base into your repo; ensures an `AGENTS.md` exists; creates the
-`docs/` persistence layout; and adds `tasks/` to `.gitignore`. Existing files are
-kept unless you pass `-Force`.
+`docs/` persistence layout; adds `tasks/` to `.gitignore`; and grants the NuGet
+Hebung subagent allow-list for your repo location in the Copilot CLI permissions
+store (see [Permissions](#26-permissions-stop-the-subagents-re-prompting) below).
+Existing files are kept unless you pass `-Force`. Pass `-SkipPermissions` to
+leave the permissions store untouched.
 
 ### Option B — manual (understand each piece)
 
@@ -72,7 +75,12 @@ Copy these from the kit into the **same paths** in your target repo:
 | `docs/risks-nuget-hebung.md` | `docs/risks-nuget-hebung.md` | Risk KB the skill reads before planning. |
 
 Then create empty `docs/handoffs/` and `docs/nuget-hebung/agentresults/`, and add
-`tasks/` to `.gitignore`.
+`tasks/` to `.gitignore`. Finally, grant the subagent allow-list for your repo
+location (see the next section):
+
+```powershell
+./scripts/grant-permissions.ps1 -TargetRepo C:\path\to\your-repo
+```
 
 > **Where can the skills live?** The CLI auto-discovers `.github/skills/`,
 > `.claude/skills/`, and `.agents/skills/`. This kit uses `.github/skills/`. If
@@ -87,6 +95,44 @@ git checkout -b feature/nuget-hebung
 git add -A
 git commit -m "chore: install NuGet Hebung CLI kit"
 ```
+
+---
+
+## 2.6 Permissions: stop the subagents re-prompting
+
+During a Hebung the investigator and updater subagents run the same handful of
+commands over and over. Without an allow-list the CLI asks you to approve each
+one every session, which stalls the parallel fan-out. The kit therefore records
+a small, role-scoped allow-list for **your repo location** in the Copilot CLI
+permissions store.
+
+- **Where it is stored:** `~/.copilot/permissions-config.json` (or
+  `$COPILOT_HOME/permissions-config.json`), keyed by the repo's absolute path.
+  This is a **user-profile file, not part of the repo** — so the allow-list is
+  granted per machine/location, never committed.
+- **What is granted** (the union both subagents need; the store is per-location,
+  not per-agent):
+  - commands: `dotnet restore`, `dotnet build`, `dotnet test`, `dotnet list`,
+    `dotnet list package`, `dotnet package search`, `dotnet nuget`, `git add`,
+    `git commit`, `Write-Output`, `Get-Content`, `Get-ChildItem`, `Select-String`
+  - file writes (`.csproj`, `Directory.Packages.props`, reports, `plan.md`)
+- **What is deliberately *not* granted** (stays gated behind a prompt):
+  `git push`, branch operations, and anything off the list.
+
+`bootstrap.ps1` runs this for you. To run, re-run, or apply it manually:
+
+```powershell
+./scripts/grant-permissions.ps1 -TargetRepo C:\path\to\your-repo
+```
+
+It is idempotent and merge-safe: re-running adds nothing twice, and it never
+disturbs other locations or approvals you granted by hand. To **reset**, delete
+your repo's entry from `permissions-config.json` while no CLI session is running
+in that repo (or run `/reset-allowed-tools` inside the CLI for the live session).
+
+> Identifiers follow `copilot help permissions`: command approval is on a
+> first-level subcommand basis (e.g. `git push`, `dotnet build`), so the
+> `dotnet` subcommands are listed explicitly.
 
 ---
 

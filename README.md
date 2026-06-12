@@ -17,7 +17,7 @@ No Claude Code, no VS Code extension, no external "superpowers" plugin required.
 | **`nuget-package-updater` agent** | `.github/agents/` | Executes one approved, independent upgrade lane (parallelizable), pinned to `claude-opus-4.8`. |
 | **context-guard hook** | `.github/hooks/` | `agentStop` hook that detects context pressure and forces a handoff turn. |
 | **risk KB** | `docs/risks-nuget-hebung.md` | NuGet upgrade risks, CPM, lock files, ordering, and a worked TFM-bump example. |
-| **bootstrap + smoke-check** | `scripts/` | Install the kit into a target repo; validate the kit. |
+| **bootstrap + grant-permissions + smoke-check** | `scripts/` | Install the kit into a target repo (and grant the subagent allow-list); grant/reset permissions standalone; validate the kit. |
 
 ## Why a skill *and* agents (not just a skill)
 
@@ -35,6 +35,9 @@ conflict resolution, and plan for itself.
 git clone <your-fork>/nuget-hebung-kit
 
 # 2. Install it into your repo (skills, agents, hook, risk KB, AGENTS.md, docs/).
+#    Also grants the subagent allow-list for your repo location so the fan-out
+#    doesn't stall on permission prompts (git push stays gated; -SkipPermissions
+#    opts out). See SETUP.md > "Permissions".
 cd nuget-hebung-kit
 ./scripts/bootstrap.ps1 -TargetRepo C:\path\to\your-repo
 

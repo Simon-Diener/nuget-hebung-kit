@@ -34,6 +34,12 @@ upgrade.** Announce each phase as you enter it.
   showing the command output.
 - **Git safety.** Work on a feature branch; small atomic commits; never commit
   directly to `main`/`master`/`staging`/`release`. One logical bump per commit.
+- **Allowed commands / permissions.** The kit pre-approves the subagents'
+  routine commands per repo location (via `scripts/grant-permissions.ps1`, run by
+  `bootstrap.ps1`): `dotnet restore`/`build`/`test`, `dotnet list` /
+  `dotnet package search` / `dotnet nuget`, `git add`/`commit`, and file writes —
+  so the fan-out does not stall on permission prompts. `git push`, branch
+  operations, and anything off the list still prompt; never work around a gate.
 
 ## The run folder (`docs/nuget-hebung/`)
 
