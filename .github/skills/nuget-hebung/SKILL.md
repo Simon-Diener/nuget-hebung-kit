@@ -1,6 +1,6 @@
 ---
 name: nuget-hebung
-description: Use when upgrading ("raising" / "Hebung") NuGet packages across a .NET solution, especially a large multi-project one, including bumping packages to a newer target framework (e.g. net472 -> net8.0). Drives a persisted, phase-by-phase, subagent-driven workflow — brainstorming, parallel per-project investigation written to docs/nuget-hebung/agentresults/, consolidation into a dependency + state graph, conflict resolution with the user, an approved ordered plan, parallel execution, and full-solution verification. Self-contained: needs no external "superpowers" skills. Read docs/risks-nuget-hebung.md once before planning.
+description: 'Use when upgrading ("raising" / "Hebung") NuGet packages across a .NET solution, especially a large multi-project one, including bumping packages to a newer target framework (e.g. net472 -> net8.0). Drives a persisted, phase-by-phase, subagent-driven workflow — brainstorming, parallel per-project investigation written to docs/nuget-hebung/agentresults/, consolidation into a dependency + state graph, conflict resolution with the user, an approved ordered plan, parallel execution, and full-solution verification. Self-contained, needs no external "superpowers" skills. Read docs/risks-nuget-hebung.md once before planning.'
 ---
 
 # NuGet Hebung — drive a large NuGet upgrade with a persisted, subagent-driven workflow
