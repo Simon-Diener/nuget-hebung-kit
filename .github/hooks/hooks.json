@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "agentStop": [
+      {
+        "type": "command",
+        "powershell": "powershell -NoProfile -ExecutionPolicy Bypass -File .github/hooks/context-guard.ps1",
+        "bash": "bash .github/hooks/context-guard.sh",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}
