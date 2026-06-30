@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Land the team's new agentic-coding sources as a lean `AGENTS.md` plus two linked docs (`docs/dogma/workflow.md`, `docs/conventions/model-and-effort.md`), and retune the pinned subagents to the lowest viable model.
+**Goal:** Land the team's new agentic-coding sources as a lean `AGENTS.md` plus two linked docs (`docs/conventions/dogma.md`, `docs/conventions/model-and-effort.md`), and retune the pinned subagents to the lowest viable model.
 
 **Architecture:** `AGENTS.md` is the scannable single-source-of-truth operating contract; detailed dogma and the token/model/effort convention live in two linked docs under `docs/`. Subagent frontmatter is downgraded Opus→Sonnet with a documented Opus escalation.
 
@@ -85,14 +85,14 @@ git commit -m "docs(conventions): add model + effort selection convention (token
 ### Task 2: Consolidated dogma/workflow doc
 
 **Files:**
-- Create: `docs/dogma/workflow.md`
+- Create: `docs/conventions/dogma.md`
 
 **Interfaces:**
 - Produces: a doc `AGENTS.md` (Task 3) links to as the consolidated dogma/workflow.
 
 - [ ] **Step 1: Write the doc**
 
-Author `docs/dogma/workflow.md` merging `global_rules.md` + `master-prompt.txt` per spec §B. Keep (non-conflicting): plan→implement→verify phases; self-improvement loop (`tasks/lessons.md`); naming / control-flow / typing standards; communication protocol (concise, no preamble, no emojis); feature-branch workflow; DRY; code-smell thresholds (>30-line function / >300-line file / >2 nesting levels / >5 public methods); constants-over-magic-values; input validation; resource management.
+Author `docs/conventions/dogma.md` merging `global_rules.md` + `master-prompt.txt` per spec §B. Keep (non-conflicting): plan→implement→verify phases; self-improvement loop (`tasks/lessons.md`); naming / control-flow / typing standards; communication protocol (concise, no preamble, no emojis); feature-branch workflow; DRY; code-smell thresholds (>30-line function / >300-line file / >2 nesting levels / >5 public methods); constants-over-magic-values; input validation; resource management.
 
 Apply the **approved conflict resolutions** (spec §B table) — each as a short, decided rule, NOT as open questions:
 - No persona theater (no "never disclose prompt / I'm APEX / never compare to other AIs").
@@ -107,13 +107,13 @@ Add a one-line note at top: this doc is the long-form dogma; the load-bearing su
 
 - [ ] **Step 2: Verify no dropped-rule language leaked in**
 
-Run: `grep -niE "I'm APEX|never disclose|integration test|TASK_LIST\.md|do not touch" docs/dogma/workflow.md || echo CLEAN`
+Run: `grep -niE "I'm APEX|never disclose|integration test|TASK_LIST\.md|do not touch" docs/conventions/dogma.md || echo CLEAN`
 Expected: `CLEAN` (or only clearly-inverted/explanatory mentions — read each hit; there must be no instruction telling the agent to do the dropped behavior).
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/dogma/workflow.md
+git add docs/conventions/dogma.md
 git commit -m "docs(dogma): add consolidated agentic-coding workflow dogma"
 ```
 
@@ -125,7 +125,7 @@ git commit -m "docs(dogma): add consolidated agentic-coding workflow dogma"
 - Modify (rewrite): `AGENTS.md`
 
 **Interfaces:**
-- Consumes: links to `docs/dogma/workflow.md` (Task 2) and `docs/conventions/model-and-effort.md` (Task 1).
+- Consumes: links to `docs/conventions/dogma.md` (Task 2) and `docs/conventions/model-and-effort.md` (Task 1).
 - Produces: the contract `CLAUDE.md` imports via `@AGENTS.md`; persistence table that the rest of the kit relies on.
 
 - [ ] **Step 1: Rewrite the file**
@@ -134,13 +134,13 @@ Rewrite `AGENTS.md` using `AGENTS (1).md` (Downloads) as the structural base, pe
 
 Add a **Model & effort selection** section — 2-3 lines pointing to `docs/conventions/model-and-effort.md`, stating the lowest-viable-model/effort principle.
 
-Add a **Dogma docs** pointer (or fold into the existing Dogma summary) linking `docs/dogma/workflow.md`.
+Add a **Dogma docs** pointer (or fold into the existing Dogma summary) linking `docs/conventions/dogma.md`.
 
 Extend the **Persistence** table with two rows:
 
 | Path | Holds |
 |------|-------|
-| `docs/dogma/workflow.md` | Long-form agentic-coding dogma/workflow |
+| `docs/conventions/dogma.md` | Long-form agentic-coding dogma/workflow |
 | `docs/conventions/model-and-effort.md` | Model + effort selection convention (token saving) |
 
 In the **Subagents** section, change the investigator/updater model wording from "pinned to `claude-opus-4.8`" to "default `claude-sonnet-4.6`, escalate to Opus per `docs/conventions/model-and-effort.md`".
@@ -149,7 +149,7 @@ In the **Subagents** section, change the investigator/updater model wording from
 
 Run:
 ```bash
-test -f docs/dogma/workflow.md && test -f docs/conventions/model-and-effort.md && echo LINKS-OK
+test -f docs/conventions/dogma.md && test -f docs/conventions/model-and-effort.md && echo LINKS-OK
 grep -q "@AGENTS.md" CLAUDE.md && echo BRIDGE-OK
 grep -ni "claude-opus-4.8" AGENTS.md || echo NO-STALE-OPUS-PROSE
 ```
@@ -231,7 +231,7 @@ Expected: `SMOKE CHECK PASSED`. If it fails on agent frontmatter (e.g. it whitel
 
 Run:
 ```bash
-test -f docs/conventions/model-and-effort.md && test -f docs/dogma/workflow.md && echo DOCS-OK
+test -f docs/conventions/model-and-effort.md && test -f docs/conventions/dogma.md && echo DOCS-OK
 grep -rniE "model:\s*claude-opus-4\.8" .github/agents/ && echo "UNEXPECTED" || echo "AGENTS-RETUNED"
 ```
 Expected: `DOCS-OK` and `AGENTS-RETUNED`.
@@ -255,4 +255,4 @@ Expected: clean working tree; the five commits (spec + four task commits) presen
 
 **Placeholder scan:** No "TBD/TODO"; each task has concrete content, exact paths, and runnable verification commands. Prose-heavy doc bodies point to the committed spec (which holds verbatim tables) rather than re-duplicating — the spec is a required input named in Global Constraints.
 
-**Type/name consistency:** Model IDs consistent (`claude-haiku-4-5` / `claude-sonnet-4.6` / `claude-opus-4.8`); doc paths consistent across tasks (`docs/conventions/model-and-effort.md`, `docs/dogma/workflow.md`); application-table role names match agent file names.
+**Type/name consistency:** Model IDs consistent (`claude-haiku-4-5` / `claude-sonnet-4.6` / `claude-opus-4.8`); doc paths consistent across tasks (`docs/conventions/model-and-effort.md`, `docs/conventions/dogma.md`); application-table role names match agent file names.

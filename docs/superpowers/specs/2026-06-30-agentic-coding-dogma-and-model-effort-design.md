@@ -15,8 +15,8 @@ Four downloaded inputs (in `C:\Users\diener\Downloads\`):
 |---|---|---|
 | `AGENTS.md` | Verbose Obviousworks *universal template* (placeholders) | Section **checklist** only — no scaffolding carried over |
 | `AGENTS (1).md` | Lean, opinionated *operating contract* | **Base structure** for the rewritten `AGENTS.md` |
-| `global_rules.md` | Abbreviation-tagged global agentic-coding rules | Folded into `docs/dogma/workflow.md` |
-| `master-prompt.txt` | "APEX" engineer persona / cognitive framework | Folded into `docs/dogma/workflow.md` |
+| `global_rules.md` | Abbreviation-tagged global agentic-coding rules | Folded into `docs/conventions/dogma.md` |
+| `master-prompt.txt` | "APEX" engineer persona / cognitive framework | Folded into `docs/conventions/dogma.md` |
 
 Plus the external token-economy guide:
 `https://github.com/affaan-m/ECC/blob/main/the-longform-guide.md` → distilled
@@ -30,9 +30,8 @@ topic wins (user-approved).
 ```
 AGENTS.md                          # rewritten lean operating contract (single source of truth)
 docs/
-  dogma/
-    workflow.md                    # consolidated agentic-coding dogma/workflow
   conventions/
+    dogma.md                       # consolidated agentic-coding dogma/workflow
     model-and-effort.md            # token-saving + model/effort selection convention
 ```
 
@@ -65,7 +64,7 @@ sections. Section list:
 - **Subagents**, **Context management & handoff**, **Persistence table** —
   kept; persistence table extended with the two new docs.
 
-## B. `docs/dogma/workflow.md` — consolidated dogma/workflow
+## B. `docs/conventions/dogma.md` — consolidated dogma/workflow
 
 Merge of `global_rules.md` + `master-prompt.txt`. Keep the non-conflicting
 substance: plan→implement→verify phases, self-improvement loop
