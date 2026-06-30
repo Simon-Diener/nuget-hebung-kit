@@ -62,6 +62,16 @@ $AllowedCommands = @(
     # updater: build + unit tests
     'dotnet build'
     'dotnet test'
+    # PS5->PS6 migrator: SDK-style conversion + package install, and publishing the tools
+    'dotnet add'
+    'dotnet remove'
+    'dotnet publish'
+    # PS5->PS6 single-file migration tools (invoked directly from tools/ps5to6/dist)
+    'ps5to6-snapshot'
+    'ps5to6-uninstall-all'
+    'ps5to6-feed-probe'
+    'ps5to6-scaffold-project'
+    'ps5to6-report'
     # updater: commit one logical bump at a time (NOT push, NOT branch ops)
     'git add'
     'git commit'

@@ -77,6 +77,17 @@ foreach ($md in $mdFiles) {
     }
 }
 
+# 3b. Kit completeness: artifacts the generic skill/agent loops above do not cover
+#     (the per-kit knowledge bases and the PS5->PS6 tools solution).
+$requiredArtifacts = @(
+    'docs/risks-nuget-hebung.md'
+    'docs/ps5-to-ps6/migration-kb.md'
+    'tools/ps5to6/Ps5To6.Tools.sln'
+)
+foreach ($rel in $requiredArtifacts) {
+    if (-not (Test-Path (Join-Path $root $rel))) { $errs.Add("missing required artifact -> $rel") }
+}
+
 # 4. Hook configs are valid JSON with version + a hooks object.
 $hooksDir = Join-Path $root '.github/hooks'
 if (Test-Path $hooksDir) {
