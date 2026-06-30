@@ -12,4 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Common\Ps5To6.Tools.Common.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="fixtures/**/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
