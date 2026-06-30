@@ -26,7 +26,7 @@ the `ps5-to-ps6` skill with its own agents and single-file tooling under
 | **PS5→PS6 tools** | `tools/ps5to6/` | Single-file .NET 8 apps: `snapshot`, `uninstall-all`, `feed-probe`, `scaffold-project`, `report` (+ xUnit tests). |
 | **context-guard hook** | `.github/hooks/` | `agentStop` hook that detects context pressure and forces a handoff turn. |
 | **risk KB** | `docs/risks-nuget-hebung.md` | NuGet upgrade risks, CPM, lock files, ordering, and a worked TFM-bump example. |
-| **bootstrap + grant-permissions + smoke-check** | `scripts/` | Install the kit into a target repo (and grant the subagent allow-list); grant/reset permissions standalone; validate the kit. |
+| **bootstrap + grant-permissions + deploy-tools + smoke-check** | `scripts/` | Install the kit into a target repo (and grant the subagent allow-list); grant/reset permissions standalone; `deploy-tools.ps1 -TargetRepo <path>` (re)builds just the ps5to6 tools into a target (wipes any stale `dist` first); validate the kit. |
 
 ## Why a skill *and* agents (not just a skill)
 
