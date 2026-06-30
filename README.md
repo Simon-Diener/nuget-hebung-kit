@@ -7,6 +7,11 @@ with a **persisted plan**, **parallel subagent investigation/execution**, and
 
 No Claude Code, no VS Code extension, no external "superpowers" plugin required.
 
+It also ships a **PS5 → PS6** product-migration workflow (Noxum Publishing Studio,
+.NET Framework 4.7.1 → .NET 8, SDK-style conversion, partial-success by design) —
+the `ps5-to-ps6` skill with its own agents and single-file tooling under
+`tools/ps5to6/`.
+
 ## What's in it
 
 | Piece | Path | Role |
@@ -15,6 +20,10 @@ No Claude Code, no VS Code extension, no external "superpowers" plugin required.
 | **`handoff` skill** | `.github/skills/handoff/SKILL.md` | Snapshots session state so a fresh session resumes cleanly. |
 | **`nuget-project-investigator` agent** | `.github/agents/` | Read-only per-project investigator; default `claude-sonnet-4.6`, escalated to Opus per the model/effort convention. |
 | **`nuget-package-updater` agent** | `.github/agents/` | Executes one approved, independent upgrade lane (parallelizable); default `claude-sonnet-4.6`, escalated to Opus per the model/effort convention. |
+| **`ps5-to-ps6` skill** | `.github/skills/ps5-to-ps6/SKILL.md` | PS5→PS6 product migration: snapshot the IST state → uninstall all → bottom-up per-project scaffold / feed-probe / install / build / breaking-change fix, partial-success, persisted to `docs/ps5-to-ps6/`. |
+| **`ps5-to-ps6-investigator` / `ps5-to-ps6-migrator` agents** | `.github/agents/` | Cross-check one project's snapshot; execute one project's migration. Default `claude-sonnet-4.6`, escalated to Opus per the convention. |
+| **PS5→PS6 migration KB** | `docs/ps5-to-ps6/migration-kb.md` | Package rename map, per-role package sets, config + code breaking-change transforms. |
+| **PS5→PS6 tools** | `tools/ps5to6/` | Single-file .NET 8 apps: `snapshot`, `uninstall-all`, `feed-probe`, `scaffold-project`, `report` (+ xUnit tests). |
 | **context-guard hook** | `.github/hooks/` | `agentStop` hook that detects context pressure and forces a handoff turn. |
 | **risk KB** | `docs/risks-nuget-hebung.md` | NuGet upgrade risks, CPM, lock files, ordering, and a worked TFM-bump example. |
 | **bootstrap + grant-permissions + smoke-check** | `scripts/` | Install the kit into a target repo (and grant the subagent allow-list); grant/reset permissions standalone; validate the kit. |

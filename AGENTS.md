@@ -14,12 +14,18 @@ upgrade ("NuGet Hebung")** across a multi-project .NET solution — with a
 **automated context-limit handoff**. Durable run state lives in `docs/` and is
 committed, so a fresh session rebuilds context from files alone.
 
+The kit also ships a **PS5 → PS6** product-migration workflow (Noxum Publishing
+Studio, .NET Framework 4.7.1 → .NET 8, SDK-style conversion, partial-success by
+design) with dedicated single-file tooling under `tools/ps5to6/`.
+
 ## Skill-first rule
 
 Before responding to a request — including clarifying questions — check whether
 an installed skill applies and use it. If there is even a small chance a skill
 applies, use it. For a NuGet upgrade ("Hebung") of any size, use the
-**`nuget-hebung`** skill. When a session gets long or context feels tight, use
+**`nuget-hebung`** skill. For migrating a Noxum Publishing Studio solution from
+**PS5 to PS6** (net472 → net8, SDK-style, the PS6 package set), use the
+**`ps5-to-ps6`** skill. When a session gets long or context feels tight, use
 the **`handoff`** skill.
 
 ## Dogma (summary)
@@ -153,9 +159,19 @@ the model/effort convention:
 - **`nuget-package-updater`** (`.github/agents/`) — executes one approved,
   independent upgrade lane (parallelizable); default `claude-sonnet-4.6`,
   escalated to Opus on first-attempt failure or a migration-heavy lane.
+- **`ps5-to-ps6-investigator`** (`.github/agents/`) — read-only cross-check of one
+  project's snapshot classification + dependency capture during a PS5→PS6
+  migration, plus a grep for code-level breaking-change sites; default
+  `claude-sonnet-4.6`, Opus for large/code-heavy projects.
+- **`ps5-to-ps6-migrator`** (`.github/agents/`) — executes one project's PS5→PS6
+  migration when the scripted scaffold+build is insufficient (transitive-gap
+  resolution, code/config breaking-change fixes); default `claude-sonnet-4.6`,
+  Opus on first-attempt failure or a code-heavy project.
 
 The orchestrator keeps synthesis, graph-building, conflict resolution, and the
-plan (Opus / high effort); it delegates investigation and execution.
+plan (Opus / high effort); it delegates investigation and execution. During a
+PS5→PS6 migration it records minimal per-step feedback (**works / doesn't / why /
+do**) in `docs/ps5-to-ps6/steps.md` — see the `ps5-to-ps6` skill for the format.
 
 ## Context management & handoff
 
@@ -171,6 +187,10 @@ may also run `handoff` manually anytime you sense drift.
 | `docs/nuget-hebung/plan.md` | The persisted run state machine for a NuGet Hebung |
 | `docs/nuget-hebung/agentresults/<projectId>/` | Per-project investigation reports |
 | `docs/nuget-hebung/{dependency-graph,state-graph,conflicts}.md` | Consolidated graphs + conflict decisions |
+| `docs/ps5-to-ps6/plan.md` | The persisted run state machine for a PS5→PS6 migration |
+| `docs/ps5-to-ps6/{inventory,dependency-graph,steps,mappings,gaps,cost-ledger,report}` | Snapshot, order, per-step feedback, mappings, gaps, cost ledger, final report |
+| `docs/ps5-to-ps6/migration-kb.md` | PS5→PS6 transform knowledge base |
+| `tools/ps5to6/` | Single-file migration tools (snapshot, uninstall-all, feed-probe, scaffold-project, report) |
 | `docs/conventions/dogma.md` | Long-form agentic-coding dogma & workflow |
 | `docs/conventions/model-and-effort.md` | Model + effort selection convention (token saving) |
 | `docs/handoffs/` | Session-state snapshots (written by the `handoff` skill / hook) |
@@ -179,8 +199,11 @@ may also run `handoff` manually anytime you sense drift.
 
 ## Layout
 
-- `.github/skills/` — `nuget-hebung`, `handoff`, `refactor` (portable `SKILL.md`).
-- `.github/agents/` — `nuget-project-investigator`, `nuget-package-updater`.
+- `.github/skills/` — `nuget-hebung`, `ps5-to-ps6`, `handoff`, `refactor` (portable `SKILL.md`).
+- `.github/agents/` — `nuget-project-investigator`, `nuget-package-updater`,
+  `ps5-to-ps6-investigator`, `ps5-to-ps6-migrator`.
 - `.github/hooks/hooks.json` — `agentStop` context-guard → handoff nudge.
 - `docs/conventions/` — `dogma.md`, `model-and-effort.md`.
-- `docs/risks-nuget-hebung.md` — risk knowledge base for the upgrade.
+- `docs/risks-nuget-hebung.md` — risk knowledge base for the NuGet upgrade.
+- `docs/ps5-to-ps6/migration-kb.md` — PS5→PS6 transform knowledge base.
+- `tools/ps5to6/` — single-file PS5→PS6 migration tools (+ xUnit tests).

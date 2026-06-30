@@ -71,9 +71,12 @@ Copy these from the kit into the **same paths** in your target repo:
 | `AGENTS.md` | `AGENTS.md` | Operating contract the CLI reads on every session. If you already have one, **merge** rather than overwrite. |
 | `.github/skills/nuget-hebung/` | `.github/skills/nuget-hebung/` | The upgrade workflow (`/nuget-hebung`). |
 | `.github/skills/handoff/` | `.github/skills/handoff/` | Session-state persistence. |
-| `.github/agents/*.agent.md` | `.github/agents/` | The investigator + updater subagents (default `claude-sonnet-4.6`, escalated to Opus per the model/effort convention). |
+| `.github/skills/ps5-to-ps6/` | `.github/skills/ps5-to-ps6/` | The PS5→PS6 migration workflow (`/ps5-to-ps6`). |
+| `.github/agents/*.agent.md` | `.github/agents/` | The investigator + updater + PS5→PS6 subagents (default `claude-sonnet-4.6`, escalated to Opus per the model/effort convention). |
 | `.github/hooks/*` | `.github/hooks/` | `agentStop` context-guard → handoff nudge. |
-| `docs/risks-nuget-hebung.md` | `docs/risks-nuget-hebung.md` | Risk KB the skill reads before planning. |
+| `docs/risks-nuget-hebung.md` | `docs/risks-nuget-hebung.md` | Risk KB the NuGet-Hebung skill reads before planning. |
+| `docs/ps5-to-ps6/migration-kb.md` | `docs/ps5-to-ps6/migration-kb.md` | PS5→PS6 transform KB the migration skill reads before Phase 4. |
+| `tools/ps5to6/dist/` | `tools/ps5to6/dist/` | Pre-published single-file PS5→PS6 tools (so the target needs no build). |
 
 Then create empty `docs/handoffs/` and `docs/nuget-hebung/agentresults/`, and add
 `tasks/` to `.gitignore`. Finally, grant the subagent allow-list for your repo
@@ -116,6 +119,9 @@ permissions store.
   - commands: `dotnet restore`, `dotnet build`, `dotnet test`, `dotnet list`,
     `dotnet list package`, `dotnet package search`, `dotnet nuget`, `git add`,
     `git commit`, `Write-Output`, `Get-Content`, `Get-ChildItem`, `Select-String`
+  - PS5→PS6 migration: `dotnet add`, `dotnet remove`, `dotnet publish`, and the
+    `ps5to6-*` tools (`ps5to6-snapshot`, `-uninstall-all`, `-feed-probe`,
+    `-scaffold-project`, `-report`)
   - file writes (`.csproj`, `Directory.Packages.props`, reports, `plan.md`)
 - **What is deliberately *not* granted** (stays gated behind a prompt):
   `git push`, branch operations, and anything off the list.
@@ -149,9 +155,10 @@ copilot
 Then, inside the CLI:
 
 - `/env` — confirms which instructions, skills, agents, and hooks are loaded.
-- `/skills` — you should see `nuget-hebung` and `handoff`.
-- `/agent` — you should see `nuget-project-investigator` and
-  `nuget-package-updater` (these are delegate-only workers).
+- `/skills` — you should see `nuget-hebung`, `ps5-to-ps6`, and `handoff`.
+- `/agent` — you should see `nuget-project-investigator`,
+  `nuget-package-updater`, `ps5-to-ps6-investigator`, and `ps5-to-ps6-migrator`
+  (these are delegate-only workers).
 
 If a skill or agent is missing, re-check the paths in step 2 and restart the CLI.
 
