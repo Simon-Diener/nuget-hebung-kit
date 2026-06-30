@@ -13,8 +13,8 @@ No Claude Code, no VS Code extension, no external "superpowers" plugin required.
 |---|---|---|
 | **`nuget-hebung` skill** | `.github/skills/nuget-hebung/SKILL.md` | The 8-phase workflow: preflight + feed check → brainstorm scope → parallel per-project investigation → consolidate into dependency + state graphs → resolve conflicts → approved ordered plan → parallel execution → full-solution verification. Persists everything to `docs/nuget-hebung/`. |
 | **`handoff` skill** | `.github/skills/handoff/SKILL.md` | Snapshots session state so a fresh session resumes cleanly. |
-| **`nuget-project-investigator` agent** | `.github/agents/` | Read-only per-project investigator, pinned to `claude-opus-4.8`. |
-| **`nuget-package-updater` agent** | `.github/agents/` | Executes one approved, independent upgrade lane (parallelizable), pinned to `claude-opus-4.8`. |
+| **`nuget-project-investigator` agent** | `.github/agents/` | Read-only per-project investigator; default `claude-sonnet-4.6`, escalated to Opus per the model/effort convention. |
+| **`nuget-package-updater` agent** | `.github/agents/` | Executes one approved, independent upgrade lane (parallelizable); default `claude-sonnet-4.6`, escalated to Opus per the model/effort convention. |
 | **context-guard hook** | `.github/hooks/` | `agentStop` hook that detects context pressure and forces a handoff turn. |
 | **risk KB** | `docs/risks-nuget-hebung.md` | NuGet upgrade risks, CPM, lock files, ordering, and a worked TFM-bump example. |
 | **bootstrap + grant-permissions + smoke-check** | `scripts/` | Install the kit into a target repo (and grant the subagent allow-list); grant/reset permissions standalone; validate the kit. |
@@ -23,8 +23,9 @@ No Claude Code, no VS Code extension, no external "superpowers" plugin required.
 
 The **skill** owns the workflow and the conversation; you invoke it once with
 `/nuget-hebung`. The **agents** exist only for the parts a skill cannot express:
-a **pinned model** (`claude-opus-4.8`) and a reusable, tool-scoped, delegate-only
-**worker persona** for the fan-out. The orchestrator (main session) delegates
+a **default model** (`claude-sonnet-4.6`, escalated to Opus per the model/effort
+convention) and a reusable, tool-scoped, delegate-only **worker persona** for the
+fan-out. The orchestrator (main session) delegates
 investigation and execution to those agents and keeps the synthesis, graphs,
 conflict resolution, and plan for itself.
 

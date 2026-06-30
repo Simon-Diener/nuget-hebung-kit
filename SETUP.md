@@ -53,7 +53,8 @@ cd nuget-hebung-kit
 ./scripts/bootstrap.ps1 -TargetRepo C:\path\to\your-repo
 ```
 
-It copies the skills, the model-pinned agents, the context-guard hook, and the
+It copies the skills, the model-pinned agents (default `claude-sonnet-4.6`,
+escalated to Opus per `docs/conventions/model-and-effort.md`), the context-guard hook, and the
 risk knowledge base into your repo; ensures an `AGENTS.md` exists; creates the
 `docs/` persistence layout; adds `tasks/` to `.gitignore`; and grants the NuGet
 Hebung subagent allow-list for your repo location in the Copilot CLI permissions
@@ -70,7 +71,7 @@ Copy these from the kit into the **same paths** in your target repo:
 | `AGENTS.md` | `AGENTS.md` | Operating contract the CLI reads on every session. If you already have one, **merge** rather than overwrite. |
 | `.github/skills/nuget-hebung/` | `.github/skills/nuget-hebung/` | The upgrade workflow (`/nuget-hebung`). |
 | `.github/skills/handoff/` | `.github/skills/handoff/` | Session-state persistence. |
-| `.github/agents/*.agent.md` | `.github/agents/` | The model-pinned investigator + updater subagents. |
+| `.github/agents/*.agent.md` | `.github/agents/` | The investigator + updater subagents (default `claude-sonnet-4.6`, escalated to Opus per the model/effort convention). |
 | `.github/hooks/*` | `.github/hooks/` | `agentStop` context-guard → handoff nudge. |
 | `docs/risks-nuget-hebung.md` | `docs/risks-nuget-hebung.md` | Risk KB the skill reads before planning. |
 
@@ -170,7 +171,7 @@ The skill drives eight phases and **talks to you** at the decision points:
 |---|---|---|
 | 0 Preflight | Branch + feed check; creates `docs/nuget-hebung/plan.md` | Provide the **NuGet feed / nuget.config** if missing |
 | 1 Brainstorm | Scope questions | Answer: security vs feature? **TFM bumps** (e.g. net472→net8)? renames/migration map? exceptions/pins? |
-| 2 Investigate | Parallel `nuget-project-investigator` subagents (claude-opus-4.8) write one report per project to `docs/nuget-hebung/agentresults/<projectId>/` | none (runs autonomously) |
+| 2 Investigate | Parallel `nuget-project-investigator` subagents (`claude-sonnet-4.6`, escalated to Opus per the convention) write one report per project to `docs/nuget-hebung/agentresults/<projectId>/` | none (runs autonomously) |
 | 3 Consolidate | Builds `dependency-graph.md` + `state-graph.md` | none |
 | 4 Conflicts | Feedback report of conflicts/diamonds/NU1605 risks | Resolve the flagged conflicts |
 | 5 Plan | Ordered, lane-based plan in `plan.md` | **Review and approve** before execution |
