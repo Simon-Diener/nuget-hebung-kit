@@ -48,6 +48,9 @@ function Copy-Tree($relSource, $relDest) {
     if ((Test-Path $dst) -and -not $Force) {
         Write-Host "exists (kept): $relDest  [use -Force to overwrite]"
     } else {
+        # Remove an existing destination first: `Copy-Item -Recurse $src $dst`
+        # nests the source *inside* an existing dir (e.g. dist/dist) on re-run.
+        if (Test-Path $dst) { Remove-Item -Recurse -Force $dst }
         Copy-Item -Recurse -Force $src $dst
         Write-Host "copied: $relDest"
     }
