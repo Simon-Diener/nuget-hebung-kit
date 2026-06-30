@@ -17,8 +17,20 @@ have a target repo that any teammate can clone, open in the CLI, and run
    copilot                             # then run /login and follow the prompts
    ```
    In the CLI you can confirm it works with `/version` and `/help`.
-2. **.NET SDK** — needed by the upgrade itself: `dotnet --version`.
+2. **.NET SDK** — needed by the upgrade itself: `dotnet --version`. (The PS5→PS6
+   tools target .NET 8; the .NET 8 SDK or newer must be installed.)
 3. **A target repo** — the .NET solution you want to upgrade, as a local git repo.
+4. **(PS5 → PS6 only) The Noxum NuGet feed.** The migration resolves PS6 packages
+   from Noxum's private feed, so it must be a configured **package source** before
+   you run `/ps5-to-ps6`. Put it in the **target solution's `nuget.config`** (feed
+   URL — keep credentials out of source control), or register it:
+   ```bash
+   dotnet nuget add source "https://<noxum-feed-url>/v3/index.json" -n noxum
+   # Private-feed auth: prefer a credential provider / credential manager or
+   # environment variables over a plaintext password in nuget.config.
+   ```
+   The skill's **Phase 0** verifies a feed is configured and **stops to ask** if
+   none is found — without it, "is there a net8 version?" answers are wrong.
 
 ---
 
@@ -53,10 +65,14 @@ cd nuget-hebung-kit
 ./scripts/bootstrap.ps1 -TargetRepo C:\path\to\your-repo
 ```
 
-It copies the skills, the model-pinned agents, the context-guard hook, and the
+It copies the skills, the model-pinned agents (default `claude-sonnet-4.6`,
+escalated to Opus per `docs/conventions/model-and-effort.md`), the context-guard hook, and the
 risk knowledge base into your repo; ensures an `AGENTS.md` exists; creates the
-`docs/` persistence layout; and adds `tasks/` to `.gitignore`. Existing files are
-kept unless you pass `-Force`.
+`docs/` persistence layout; adds `tasks/` to `.gitignore`; and grants the NuGet
+Hebung subagent allow-list for your repo location in the Copilot CLI permissions
+store (see [Permissions](#26-permissions-stop-the-subagents-re-prompting) below).
+Existing files are kept unless you pass `-Force`. Pass `-SkipPermissions` to
+leave the permissions store untouched.
 
 ### Option B — manual (understand each piece)
 
@@ -67,12 +83,20 @@ Copy these from the kit into the **same paths** in your target repo:
 | `AGENTS.md` | `AGENTS.md` | Operating contract the CLI reads on every session. If you already have one, **merge** rather than overwrite. |
 | `.github/skills/nuget-hebung/` | `.github/skills/nuget-hebung/` | The upgrade workflow (`/nuget-hebung`). |
 | `.github/skills/handoff/` | `.github/skills/handoff/` | Session-state persistence. |
-| `.github/agents/*.agent.md` | `.github/agents/` | The model-pinned investigator + updater subagents. |
+| `.github/skills/ps5-to-ps6/` | `.github/skills/ps5-to-ps6/` | The PS5→PS6 migration workflow (`/ps5-to-ps6`). |
+| `.github/agents/*.agent.md` | `.github/agents/` | The investigator + updater + PS5→PS6 subagents (default `claude-sonnet-4.6`, escalated to Opus per the model/effort convention). |
 | `.github/hooks/*` | `.github/hooks/` | `agentStop` context-guard → handoff nudge. |
-| `docs/risks-nuget-hebung.md` | `docs/risks-nuget-hebung.md` | Risk KB the skill reads before planning. |
+| `docs/risks-nuget-hebung.md` | `docs/risks-nuget-hebung.md` | Risk KB the NuGet-Hebung skill reads before planning. |
+| `docs/ps5-to-ps6/migration-kb.md` | `docs/ps5-to-ps6/migration-kb.md` | PS5→PS6 transform KB the migration skill reads before Phase 4. |
+| `tools/ps5to6/dist/` | `tools/ps5to6/dist/` | Pre-published single-file PS5→PS6 tools (so the target needs no build). |
 
 Then create empty `docs/handoffs/` and `docs/nuget-hebung/agentresults/`, and add
-`tasks/` to `.gitignore`.
+`tasks/` to `.gitignore`. Finally, grant the subagent allow-list for your repo
+location (see the next section):
+
+```powershell
+./scripts/grant-permissions.ps1 -TargetRepo C:\path\to\your-repo
+```
 
 > **Where can the skills live?** The CLI auto-discovers `.github/skills/`,
 > `.claude/skills/`, and `.agents/skills/`. This kit uses `.github/skills/`. If
@@ -90,6 +114,47 @@ git commit -m "chore: install NuGet Hebung CLI kit"
 
 ---
 
+## 2.6 Permissions: stop the subagents re-prompting
+
+During a Hebung the investigator and updater subagents run the same handful of
+commands over and over. Without an allow-list the CLI asks you to approve each
+one every session, which stalls the parallel fan-out. The kit therefore records
+a small, role-scoped allow-list for **your repo location** in the Copilot CLI
+permissions store.
+
+- **Where it is stored:** `~/.copilot/permissions-config.json` (or
+  `$COPILOT_HOME/permissions-config.json`), keyed by the repo's absolute path.
+  This is a **user-profile file, not part of the repo** — so the allow-list is
+  granted per machine/location, never committed.
+- **What is granted** (the union both subagents need; the store is per-location,
+  not per-agent):
+  - commands: `dotnet restore`, `dotnet build`, `dotnet test`, `dotnet list`,
+    `dotnet list package`, `dotnet package search`, `dotnet nuget`, `git add`,
+    `git commit`, `Write-Output`, `Get-Content`, `Get-ChildItem`, `Select-String`
+  - PS5→PS6 migration: `dotnet add`, `dotnet remove`, `dotnet publish`, and the
+    `ps5to6-*` tools (`ps5to6-snapshot`, `-uninstall-all`, `-feed-probe`,
+    `-scaffold-project`, `-report`)
+  - file writes (`.csproj`, `Directory.Packages.props`, reports, `plan.md`)
+- **What is deliberately *not* granted** (stays gated behind a prompt):
+  `git push`, branch operations, and anything off the list.
+
+`bootstrap.ps1` runs this for you. To run, re-run, or apply it manually:
+
+```powershell
+./scripts/grant-permissions.ps1 -TargetRepo C:\path\to\your-repo
+```
+
+It is idempotent and merge-safe: re-running adds nothing twice, and it never
+disturbs other locations or approvals you granted by hand. To **reset**, delete
+your repo's entry from `permissions-config.json` while no CLI session is running
+in that repo (or run `/reset-allowed-tools` inside the CLI for the live session).
+
+> Identifiers follow `copilot help permissions`: command approval is on a
+> first-level subcommand basis (e.g. `git push`, `dotnet build`), so the
+> `dotnet` subcommands are listed explicitly.
+
+---
+
 ## 3. Verify the CLI sees everything
 
 Open the target repo in the CLI:
@@ -102,9 +167,10 @@ copilot
 Then, inside the CLI:
 
 - `/env` — confirms which instructions, skills, agents, and hooks are loaded.
-- `/skills` — you should see `nuget-hebung` and `handoff`.
-- `/agent` — you should see `nuget-project-investigator` and
-  `nuget-package-updater` (these are delegate-only workers).
+- `/skills` — you should see `nuget-hebung`, `ps5-to-ps6`, and `handoff`.
+- `/agent` — you should see `nuget-project-investigator`,
+  `nuget-package-updater`, `ps5-to-ps6-investigator`, and `ps5-to-ps6-migrator`
+  (these are delegate-only workers).
 
 If a skill or agent is missing, re-check the paths in step 2 and restart the CLI.
 
@@ -124,7 +190,7 @@ The skill drives eight phases and **talks to you** at the decision points:
 |---|---|---|
 | 0 Preflight | Branch + feed check; creates `docs/nuget-hebung/plan.md` | Provide the **NuGet feed / nuget.config** if missing |
 | 1 Brainstorm | Scope questions | Answer: security vs feature? **TFM bumps** (e.g. net472→net8)? renames/migration map? exceptions/pins? |
-| 2 Investigate | Parallel `nuget-project-investigator` subagents (claude-opus-4.8) write one report per project to `docs/nuget-hebung/agentresults/<projectId>/` | none (runs autonomously) |
+| 2 Investigate | Parallel `nuget-project-investigator` subagents (`claude-sonnet-4.6`, escalated to Opus per the convention) write one report per project to `docs/nuget-hebung/agentresults/<projectId>/` | none (runs autonomously) |
 | 3 Consolidate | Builds `dependency-graph.md` + `state-graph.md` | none |
 | 4 Conflicts | Feedback report of conflicts/diamonds/NU1605 risks | Resolve the flagged conflicts |
 | 5 Plan | Ordered, lane-based plan in `plan.md` | **Review and approve** before execution |

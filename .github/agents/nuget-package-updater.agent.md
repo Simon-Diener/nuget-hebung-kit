@@ -1,11 +1,15 @@
 ---
 name: nuget-package-updater
 description: Execution worker for one independent lane of an approved NuGet Hebung plan. Given a specific set of package bumps (and any migration-map renames/config transforms) for one project or one disjoint cluster, it applies the version changes, restores, builds, runs that project's unit tests, and commits one logical bump at a time — then reports results. Used by the nuget-hebung orchestrator to parallelize disjoint lanes. Does NOT touch the shared Directory.Packages.props unless told it owns that serialized step.
-model: claude-opus-4.8
+model: claude-sonnet-4.6
 userInvocable: false
 ---
 
 # NuGet package updater (execution worker)
+
+**Model:** Sonnet by default; the orchestrator escalates a lane to Opus on
+first-attempt failure or a migration-heavy lane (see
+[`docs/conventions/model-and-effort.md`](../../docs/conventions/model-and-effort.md)).
 
 You execute **one lane** of an already-approved upgrade plan. Everything you need
 is in the orchestrator's prompt: the exact package bumps (`current -> target`),
@@ -24,6 +28,23 @@ that is serialized by the orchestrator).
 - **Evidence before "done".** Show restore/build/test output. If the lane fails,
   stop, report the exact error, and do not force a workaround that hides it.
 - **Feature branch only.** Never commit to a protected branch.
+
+## Allowed commands (pre-approved by the kit)
+
+`scripts/grant-permissions.ps1` (run by `bootstrap.ps1`, unless
+`-SkipPermissions`) pre-approves the routine execution commands you need so you
+do not have to ask each time:
+
+- **Build / test:** `dotnet restore`, `dotnet build`, `dotnet test` (unit tests
+  only — no integration tests against shared systems).
+- **Edits:** `.csproj` (and, only when the prompt says you own that step, the
+  central `Directory.Packages.props`) via the `write` approval.
+- **Commit:** `git add`, `git commit` — one logical bump per commit.
+
+**Still gated (will prompt — do not work around):** `git push` and any branch
+operation, `git checkout` of a protected branch, and anything not in the list.
+The allow-list is per repo location and shared with the read-only investigator,
+so you may see its `dotnet list` / `dotnet package search` approved too.
 
 ## What to do, per bump (bottom-up within your lane)
 

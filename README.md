@@ -7,24 +7,34 @@ with a **persisted plan**, **parallel subagent investigation/execution**, and
 
 No Claude Code, no VS Code extension, no external "superpowers" plugin required.
 
+It also ships a **PS5 → PS6** product-migration workflow (Noxum Publishing Studio,
+.NET Framework 4.7.1 → .NET 8, SDK-style conversion, partial-success by design) —
+the `ps5-to-ps6` skill with its own agents and single-file tooling under
+`tools/ps5to6/`.
+
 ## What's in it
 
 | Piece | Path | Role |
 |---|---|---|
 | **`nuget-hebung` skill** | `.github/skills/nuget-hebung/SKILL.md` | The 8-phase workflow: preflight + feed check → brainstorm scope → parallel per-project investigation → consolidate into dependency + state graphs → resolve conflicts → approved ordered plan → parallel execution → full-solution verification. Persists everything to `docs/nuget-hebung/`. |
 | **`handoff` skill** | `.github/skills/handoff/SKILL.md` | Snapshots session state so a fresh session resumes cleanly. |
-| **`nuget-project-investigator` agent** | `.github/agents/` | Read-only per-project investigator, pinned to `claude-opus-4.8`. |
-| **`nuget-package-updater` agent** | `.github/agents/` | Executes one approved, independent upgrade lane (parallelizable), pinned to `claude-opus-4.8`. |
+| **`nuget-project-investigator` agent** | `.github/agents/` | Read-only per-project investigator; default `claude-sonnet-4.6`, escalated to Opus per the model/effort convention. |
+| **`nuget-package-updater` agent** | `.github/agents/` | Executes one approved, independent upgrade lane (parallelizable); default `claude-sonnet-4.6`, escalated to Opus per the model/effort convention. |
+| **`ps5-to-ps6` skill** | `.github/skills/ps5-to-ps6/SKILL.md` | PS5→PS6 product migration: snapshot the IST state → uninstall all → bottom-up per-project scaffold / feed-probe / install / build / breaking-change fix, partial-success, persisted to `docs/ps5-to-ps6/`. |
+| **`ps5-to-ps6-investigator` / `ps5-to-ps6-migrator` agents** | `.github/agents/` | Cross-check one project's snapshot; execute one project's migration. Default `claude-sonnet-4.6`, escalated to Opus per the convention. |
+| **PS5→PS6 migration KB** | `docs/ps5-to-ps6/migration-kb.md` | Package rename map, per-role package sets, config + code breaking-change transforms. |
+| **PS5→PS6 tools** | `tools/ps5to6/` | Single-file .NET 8 apps: `snapshot`, `uninstall-all`, `feed-probe`, `scaffold-project`, `report` (+ xUnit tests). |
 | **context-guard hook** | `.github/hooks/` | `agentStop` hook that detects context pressure and forces a handoff turn. |
 | **risk KB** | `docs/risks-nuget-hebung.md` | NuGet upgrade risks, CPM, lock files, ordering, and a worked TFM-bump example. |
-| **bootstrap + smoke-check** | `scripts/` | Install the kit into a target repo; validate the kit. |
+| **bootstrap + grant-permissions + smoke-check** | `scripts/` | Install the kit into a target repo (and grant the subagent allow-list); grant/reset permissions standalone; validate the kit. |
 
 ## Why a skill *and* agents (not just a skill)
 
 The **skill** owns the workflow and the conversation; you invoke it once with
 `/nuget-hebung`. The **agents** exist only for the parts a skill cannot express:
-a **pinned model** (`claude-opus-4.8`) and a reusable, tool-scoped, delegate-only
-**worker persona** for the fan-out. The orchestrator (main session) delegates
+a **default model** (`claude-sonnet-4.6`, escalated to Opus per the model/effort
+convention) and a reusable, tool-scoped, delegate-only **worker persona** for the
+fan-out. The orchestrator (main session) delegates
 investigation and execution to those agents and keeps the synthesis, graphs,
 conflict resolution, and plan for itself.
 
@@ -35,6 +45,9 @@ conflict resolution, and plan for itself.
 git clone <your-fork>/nuget-hebung-kit
 
 # 2. Install it into your repo (skills, agents, hook, risk KB, AGENTS.md, docs/).
+#    Also grants the subagent allow-list for your repo location so the fan-out
+#    doesn't stall on permission prompts (git push stays gated; -SkipPermissions
+#    opts out). See SETUP.md > "Permissions".
 cd nuget-hebung-kit
 ./scripts/bootstrap.ps1 -TargetRepo C:\path\to\your-repo
 
