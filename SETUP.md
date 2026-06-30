@@ -17,8 +17,20 @@ have a target repo that any teammate can clone, open in the CLI, and run
    copilot                             # then run /login and follow the prompts
    ```
    In the CLI you can confirm it works with `/version` and `/help`.
-2. **.NET SDK** — needed by the upgrade itself: `dotnet --version`.
+2. **.NET SDK** — needed by the upgrade itself: `dotnet --version`. (The PS5→PS6
+   tools target .NET 8; the .NET 8 SDK or newer must be installed.)
 3. **A target repo** — the .NET solution you want to upgrade, as a local git repo.
+4. **(PS5 → PS6 only) The Noxum NuGet feed.** The migration resolves PS6 packages
+   from Noxum's private feed, so it must be a configured **package source** before
+   you run `/ps5-to-ps6`. Put it in the **target solution's `nuget.config`** (feed
+   URL — keep credentials out of source control), or register it:
+   ```bash
+   dotnet nuget add source "https://<noxum-feed-url>/v3/index.json" -n noxum
+   # Private-feed auth: prefer a credential provider / credential manager or
+   # environment variables over a plaintext password in nuget.config.
+   ```
+   The skill's **Phase 0** verifies a feed is configured and **stops to ask** if
+   none is found — without it, "is there a net8 version?" answers are wrong.
 
 ---
 
