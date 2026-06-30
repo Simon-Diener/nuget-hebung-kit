@@ -9,7 +9,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="NuGet.Protocol" Version="6.11.0" />
+    <PackageReference Include="NuGet.Protocol" Version="6.14.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Ps5To6.Tools.Common.csproj" />
