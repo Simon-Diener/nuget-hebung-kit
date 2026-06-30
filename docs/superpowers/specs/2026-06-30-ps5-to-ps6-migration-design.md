@@ -222,6 +222,17 @@ consult:
   the tools solution, and the KB.
 - **`scripts/grant-permissions.ps1`** — pre-approve `dotnet publish`, the SFA
   invocations, and `dotnet add/remove package`.
+- **`scripts/bootstrap.ps1` (the setup script — final step of the build)** —
+  extend the existing kit-installer so that, in addition to the `nuget-hebung`
+  components, it copies the new PS5→PS6 kit into a target solution: the
+  `ps5-to-ps6` skill, both `ps5-to-ps6-*` agents, the migration KB
+  (`docs/ps5-to-ps6/migration-kb.md`), the **built single-file SFA tools** (so
+  the target needs no build of the kit), and the `docs/ps5-to-ps6/agentresults`
+  persistence layout; and grants the new permission allow-list. Decide whether
+  the SFAs are shipped as pre-published single-file exes or built on first use in
+  the target — default: ship pre-published exes under a kit `tools/ps5to6/dist/`
+  so the target solution is self-contained. Update the script's "Next steps"
+  footer to mention `/ps5-to-ps6`.
 - **xUnit fixtures** — synthetic legacy `packages.config` project, an SDK-style
   project, a dependency-only project, a mini project-reference graph, and an
   offline feed stub for `feed-probe`. Each SFA unit-tested.
