@@ -14,6 +14,9 @@ set -euo pipefail
 TURN_THRESHOLD="${CONTEXT_GUARD_TURNS:-30}"
 REARM_INTERVAL="${CONTEXT_GUARD_REARM:-25}"
 SIZE_THRESH_MB="${CONTEXT_GUARD_SIZE_MB:-3}"
+# Startup grace: never nudge in the first N turns, so a freshly resumed session
+# that just read a handoff is not immediately told to hand off again.
+STARTUP_GRACE="${CONTEXT_GUARD_MIN_TURNS:-12}"
 
 emit() { printf '%s' "$1"; }
 trap 'emit "{}"' ERR
@@ -47,9 +50,9 @@ if [ -n "$tp" ] && [ -f "$tp" ]; then
 fi
 
 reason=""
-if [ "$turns" -ge "$next_trigger" ]; then
+if [ "$turns" -ge "$STARTUP_GRACE" ] && [ "$turns" -ge "$next_trigger" ]; then
   if [ "$transcript_mb" -ge "$SIZE_THRESH_MB" ]; then
-    reason="the transcript is large (~${transcript_mb} MB)"
+    reason="this session is ${turns} turns long and the transcript is large (~${transcript_mb} MB)"
   else
     reason="this session is ${turns} turns long"
   fi
@@ -59,7 +62,7 @@ fi
 printf '{"turns":%s,"nextTrigger":%s}' "$turns" "$next_trigger" > "$state_file"
 
 if [ -n "$reason" ]; then
-  msg="[context-guard] ${reason}, so context may be running low. Before anything else, persist state: if a NuGet Hebung is in progress, update docs/nuget-hebung/plan.md (current phase, ticked steps, exact '## Resume' line); then invoke the \`handoff\` skill to write docs/handoffs/<today>-<topic>.md; commit both. Then tell the user to continue in a fresh session opening with 'Read docs/nuget-hebung/plan.md and continue from Resume.' (Heuristic -- if you just handed off, simply finish.)"
+  msg="[context-guard] ${reason}, so context may be running low. Before anything else, persist state: if a Hebung/migration is in progress, update its run plan (docs/nuget-hebung/plan.md or docs/ps5-to-ps6/plan.md -- current phase, ticked steps, exact '## Resume' line); then invoke the \`handoff\` skill to write docs/handoffs/<today>-<topic>.md; commit both. Then tell the user to continue in a fresh session opening with 'Read <that plan> and continue from Resume.' (Heuristic -- if you just handed off, simply finish.)"
   jq -cn --arg r "$msg" '{decision:"block",reason:$r}' 2>/dev/null || printf '{"decision":"block","reason":%s}' "\"$msg\""
 else
   emit '{}'
