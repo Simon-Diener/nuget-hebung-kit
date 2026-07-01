@@ -14,14 +14,22 @@ public static class Net8VersionSelector
     {
         PackageCandidate? best = candidates
             .Where(c => c.TargetFrameworks.Any(IsNet8Compatible))
-            .OrderByDescending(c => ParseCore(c.Version))
-            .ThenByDescending(c => IsStable(c.Version)) // at equal core, stable beats prerelease/RC
+            // A net8-native build outranks a merely forward-compatible (net6/net7/
+            // netstandard) build regardless of version: the PS5→PS6 target is the
+            // net8-native package set (often shipped as RCs), not the PS5-era build
+            // that only happens to install into a net8 project.
+            .OrderByDescending(c => c.TargetFrameworks.Any(IsNet8Native))
+            .ThenByDescending(c => ParseCore(c.Version))
+            .ThenByDescending(c => IsStable(c.Version)) // at equal tier+core, stable beats prerelease/RC
             .FirstOrDefault();
 
         return best is null
             ? new FeedResult(packageId, false, null)
             : new FeedResult(packageId, true, best.Version);
     }
+
+    private static bool IsNet8Native(string tfm) =>
+        tfm.Trim().ToLowerInvariant().StartsWith("net8.0");
 
     private static bool IsNet8Compatible(string tfm)
     {
