@@ -143,8 +143,11 @@ Per-language (keep only what applies):
 
 Use the **lowest viable model and effort** for the task; escalate only on
 evidence (first attempt failed · 5+ files · architectural decision ·
-security-critical). Default to Sonnet for most coding. The full task→model→effort
-mapping and the per-kit application table:
+security-critical). Default to Sonnet for most coding. **Run the driving
+orchestration/planning session on Opus (`high`; `xhigh` only for the master
+plan) and fan work out to Sonnet workers (`medium`) — plan strong, implement
+cheap.** The full task→model→effort mapping, the orchestration economics, and the
+per-kit application table:
 [`docs/conventions/model-and-effort.md`](docs/conventions/model-and-effort.md).
 
 ## Subagents
