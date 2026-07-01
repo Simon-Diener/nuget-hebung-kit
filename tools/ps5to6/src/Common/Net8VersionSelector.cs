@@ -14,7 +14,8 @@ public static class Net8VersionSelector
     {
         PackageCandidate? best = candidates
             .Where(c => c.TargetFrameworks.Any(IsNet8Compatible))
-            .OrderByDescending(c => ParseVersion(c.Version))
+            .OrderByDescending(c => ParseCore(c.Version))
+            .ThenByDescending(c => IsStable(c.Version)) // at equal core, stable beats prerelease/RC
             .FirstOrDefault();
 
         return best is null
@@ -32,9 +33,12 @@ public static class Net8VersionSelector
         return false;
     }
 
-    private static Version ParseVersion(string v)
+    private static bool IsStable(string v) => !v.Contains('-');
+
+    private static Version ParseCore(string v)
     {
-        // Strip any pre-release suffix for ordering (e.g. "2.1.0-beta" -> 2.1.0).
+        // Numeric core for ordering (e.g. "6.1.0-rc.1" -> 6.1.0). Prerelease vs
+        // stable at the same core is broken by the IsStable tie-break above.
         string core = new string(v.TakeWhile(ch => char.IsDigit(ch) || ch == '.').ToArray());
         return Version.TryParse(core, out Version? parsed) ? parsed! : new Version(0, 0);
     }

@@ -6,5 +6,5 @@ namespace Ps5To6.Tools.Common;
 
 public interface IPackageFeed
 {
-    Task<IReadOnlyList<PackageCandidate>> GetCandidatesAsync(string packageId, CancellationToken ct);
+    Task<IReadOnlyList<PackageCandidate>> GetCandidatesAsync(string packageId, bool includePrerelease, CancellationToken ct);
 }

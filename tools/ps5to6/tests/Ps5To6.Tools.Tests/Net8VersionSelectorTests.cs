@@ -29,4 +29,38 @@ public class Net8VersionSelectorTests
         Assert.False(r.Available);
         Assert.Null(r.SelectedVersion);
     }
+
+    [Fact]
+    public void Selects_release_candidate_when_only_prerelease_exists()
+    {
+        // PS6 packages often ship only as RCs on the feed.
+        var candidates = new List<PackageCandidate> { new("6.0.0-rc.2", new[] { "net8.0" }) };
+        FeedResult r = Net8VersionSelector.Select("Noxum.OnlyRc", candidates);
+        Assert.True(r.Available);
+        Assert.Equal("6.0.0-rc.2", r.SelectedVersion);
+    }
+
+    [Fact]
+    public void Prefers_stable_over_prerelease_at_equal_core_version()
+    {
+        var candidates = new List<PackageCandidate>
+        {
+            new("6.0.0-rc.2", new[] { "net8.0" }),
+            new("6.0.0", new[] { "net8.0" }),
+        };
+        FeedResult r = Net8VersionSelector.Select("Noxum.Both", candidates);
+        Assert.Equal("6.0.0", r.SelectedVersion);
+    }
+
+    [Fact]
+    public void Higher_prerelease_beats_lower_stable()
+    {
+        var candidates = new List<PackageCandidate>
+        {
+            new("6.0.0", new[] { "net8.0" }),
+            new("6.1.0-rc.1", new[] { "net8.0" }),
+        };
+        FeedResult r = Net8VersionSelector.Select("Noxum.Newer", candidates);
+        Assert.Equal("6.1.0-rc.1", r.SelectedVersion);
+    }
 }

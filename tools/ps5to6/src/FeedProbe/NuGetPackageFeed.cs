@@ -36,7 +36,7 @@ public sealed class NuGetPackageFeed : IPackageFeed
             throw new InvalidOperationException($"No enabled NuGet sources resolved from {nugetConfigDir}.");
     }
 
-    public async Task<IReadOnlyList<PackageCandidate>> GetCandidatesAsync(string packageId, CancellationToken ct)
+    public async Task<IReadOnlyList<PackageCandidate>> GetCandidatesAsync(string packageId, bool includePrerelease, CancellationToken ct)
     {
         using var cache = new SourceCacheContext();
         var candidates = new List<PackageCandidate>();
@@ -44,7 +44,7 @@ public sealed class NuGetPackageFeed : IPackageFeed
         {
             PackageMetadataResource res = await repo.GetResourceAsync<PackageMetadataResource>(ct);
             IEnumerable<IPackageSearchMetadata> all = await res.GetMetadataAsync(
-                packageId, includePrerelease: false, includeUnlisted: false, cache, NullLogger.Instance, ct);
+                packageId, includePrerelease, includeUnlisted: false, cache, NullLogger.Instance, ct);
             candidates.AddRange(all.Select(m => new PackageCandidate(
                 m.Identity.Version.ToNormalizedString(),
                 m.DependencySets.Select(d => d.TargetFramework.GetShortFolderName()).Distinct().ToList())));
