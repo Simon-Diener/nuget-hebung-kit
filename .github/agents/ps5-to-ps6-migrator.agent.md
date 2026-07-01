@@ -58,7 +58,11 @@ do not work around a gate.
      `System.Private.CoreLib`; `Noxum.IDML.*`→`Noxum.Publishing.*`; removed
      controls). Re-build.
    - **Hard gap** (no net8 build for a required dependency) → stop, record blocker.
-4. Loop until the project builds green or a hard gap is reached.
+4. Loop until the project builds **green** or a **hard gap** is reached. These are
+   the ONLY two acceptable outcomes. Never return a red build that still has
+   *fixable* errors — a net8-available package not yet added, a KB code/config fix
+   not yet applied — as if the project were done. If you cannot reach green and the
+   remaining failure is not a genuine hard gap, keep going.
 5. **Record:** append the `steps.md` block (works / doesn't / why / do), add the
    safe `current → net8` mappings to `mappings.md`, and any gap/blocker +
    recommendation to `gaps.md`. Commit.
@@ -66,6 +70,8 @@ do not work around a gate.
 ## Output
 
 Report back to the orchestrator: the project outcome (`raised` / `partial` /
-`blocked`), the build result (with output), the packages added (and at which
-versions), the breaking-change fixes applied, and any blocker with its
-recommendation. Confirm the commit SHA.
+`blocked`), **which terminal state you reached (green / hard-gap blocker) and the
+final `dotnet build` summary line (exit code + error count)**, the packages added
+(and at which versions), the breaking-change fixes applied, and any blocker with
+its recommendation. Confirm the commit SHA. Do not report success without the
+build summary.
