@@ -78,6 +78,28 @@ Dispatch **`ps5-to-ps6-investigator`** subagents to **cross-check the largest /
 most-complex projects** (verify classification + dependency capture, and grep for
 code-level breaking-change sites). Commit the inventory + agent reports.
 
+### Phase 1.5 — Triage & routing (steer the token budget)
+The inventory now exists, so size the job once and get the user's sign-off before
+spending on execution:
+1. **Size it** from `inventory.json`: project count, dependency-only vs code
+   projects, and how many code projects show breaking-change sites (investigator
+   reports).
+2. **Recommend the orchestrator / planning model:** large or code-heavy →
+   orchestrate on **Opus `high`** (`xhigh` only for the master plan); small, mostly
+   dependency-only → **Sonnet `high`** suffices. State it; let the user confirm.
+3. **Route every project** per the rubric in
+   [`docs/conventions/model-and-effort.md`](../../../docs/conventions/model-and-effort.md)
+   (*Per-item model routing & budget*): dependency-only → **no agent**; code-light →
+   Sonnet `medium`; code-heavy / breaking → Opus; security → Opus `high`. Write the
+   **planned** model/effort + a coarse token bucket per project to `cost-ledger.md`
+   *before* executing.
+4. **Set a soft budget:** record a `## Budget` target in `plan.md`. If the summed
+   estimate exceeds it, propose cheaper routing (more no-agent/scripted, Sonnet over
+   Opus, cross-check only the top-N largest projects) and ask — never hard-stop
+   mid-migration.
+
+Set phase to `2 — Uninstall-all`; commit.
+
 ### Phase 2 — Uninstall-all (clean baseline)
 Run `ps5to6-uninstall-all <solutionRoot> --apply`. The build is expected to break —
 this is the clean baseline. Commit it. (Microsoft/System packages are recorded in
@@ -89,7 +111,9 @@ the project order for Phase 4 (a project is migrated only after everything it
 references).
 
 ### Phase 4 — Per-project migration loop (bottom-up)
-Read `migration-kb.md` first. For each project in order:
+Read `migration-kb.md` first, and apply the per-project model/effort **routing
+decided in Phase 1.5** (default down, escalate on evidence). For each project in
+order:
 1. **Classify** the role (Service / RichClient / PublishingService / Configuration
    / custom).
 2. **feed-probe** the KB package set for that role → which Noxum packages have a
@@ -129,10 +153,12 @@ Append one block per project; keep phrasing minimal:
 
 ## Cost ledger (`cost-ledger.md`)
 
-Append one row per project (for the user's AI-vs-manual cost/benefit estimate):
+Two entries per project make cost *steerable*: the **planned** model/effort + token
+bucket written in Phase 1.5 *before* dispatch, then the **actual** after the work.
+This feeds the user's AI-vs-manual cost/benefit estimate.
 
 ```markdown
-| Project | Phase | Model | Effort | #Subagents | Wall-clock | Token bucket |
+| Project | Plan/Actual | Model | Effort | #Subagents | Wall-clock | Token bucket |
 |---|---|---|---|---|---|---|
 ```
 
@@ -168,6 +194,10 @@ Append one row per project (for the user's AI-vs-manual cost/benefit estimate):
 - Solution root: <path>
 - Noxum feed: <url, or "TODO — ask user">
 - Exceptions / pins: <packages or projects to leave alone>
+
+## Budget
+- Orchestrator model: <Opus high | Sonnet high> (decided in Phase 1.5)
+- Token target: <soft target, or "none"> — orchestrator asks before exceeding
 
 ## Projects
 - [ ] <projectId> — <role> — snapshotted? migrated? outcome?

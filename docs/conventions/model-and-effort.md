@@ -84,7 +84,10 @@ wrong plan that cascades across dozens of projects.
 **Future-proofing:** these are *tiers*, not fixed IDs. When a stronger Sonnet- or
 Haiku-tier model ships (e.g. a future Sonnet 4.8 / Haiku 4.8+), slot it into the
 worker / mechanical rung — that pushes more work down to cheaper tiers without
-changing the shape of this recommendation.
+changing the shape of this recommendation. And when a Sonnet-tier reaches
+Opus-tier reasoning (e.g. a future **Sonnet 5**), promote it into the
+**orchestrator / default** seat and retire Opus there: the shape — strong model
+plans, cheap models fan out — is unchanged; only the IDs on each rung move down.
 
 ## Upgrade criteria
 
@@ -129,6 +132,32 @@ Where the harness allows per-delegation model overrides, the orchestrator sets
 the model per this table when dispatching. Where only the agent's frontmatter
 `model` is settable, that holds the default and escalation happens by
 re-dispatching on the higher model.
+
+## Per-item model routing & budget
+
+Picking the model per unit of work should be a *rule*, not a vibe — that is what
+makes token cost steerable and repeatable:
+
+- **Route by work type**, defaulting down and escalating on evidence:
+
+  | Work type | Who | Model / effort |
+  |---|---|---|
+  | Trivially mechanical / already scriptable | tools only, **no agent** | — (0 LLM tokens) |
+  | Standard implementation / investigation | worker subagent | Sonnet `medium` |
+  | Complex / breaking-change / architectural | worker subagent | Opus `medium`→`high` |
+  | Security-critical | worker subagent | Opus `high` |
+
+- **Estimate before you spend.** The orchestrator writes each item's *planned*
+  model/effort + a coarse token bucket to the run's cost ledger *before*
+  dispatching, then records the actual after. Cost is visible up front and
+  attributable afterwards.
+- **Soft budget.** A token target lives in the run plan. If the summed estimate
+  exceeds it, the orchestrator proposes cheaper routing (more no-agent/scripted
+  work, Sonnet over Opus, sampling the top-N instead of all) and asks — it does not
+  hard-stop mid-run.
+
+The kit-specific rubric (dependency-only vs code vs security project) lives in the
+`ps5-to-ps6` skill (*Phase 1.5 — Triage & routing*).
 
 ---
 
