@@ -41,6 +41,21 @@ ordering, decisions, and report. **Announce each phase as you enter it.** Read
   keeps token cost down — it is what makes an AI-driven Hebung cost-effective.
 - **Evidence before claims.** Never say a build/restore/test passed without
   showing the command output.
+- **Per-project build gate (hard stop).** A project is *done* only when
+  `dotnet build <project>` has been run **and its output shown**, and it reached
+  exactly one of two terminal states:
+  - **green** (exit 0) → ✅ raised, or ⚠️ partial if optional packages with no
+    net8 build were dropped but the project still compiles; or
+  - **blocked** ⛔ → the build fails *solely* because a required **non-Noxum**
+    dependency has no net8 build anywhere (confirmed via feed-probe / `dotnet
+    package search`), recorded in `gaps.md` with the failing output.
+
+  **Any other red state is "not done"** — missing packages that *do* have a net8
+  build, unresolved transitive gaps, un-applied KB code/config fixes, or an
+  empty/near-empty scaffold. **You MUST NOT start the next project until the
+  current one reaches a terminal state.** No build output = not done. This
+  invariant is what keeps the bottom-up order valid: a project builds only after
+  everything it references is green.
 - **Git safety.** Feature branch; small atomic commits; never commit directly to
   `main`/`master`/`staging`/`release`. One project (or one logical fix) per commit.
 - **Partial success is a valid outcome.** A hard gap (a non-Noxum dependency with
@@ -122,16 +137,38 @@ order:
    confirmed versions, applying the rename map. Custom projects: convert by hand
    (or via the migrator agent).
 4. **Install** the confirmed packages (`dotnet add package`), apply rename map.
-5. **Build** (`dotnet build <project>`). If clean **and** the project is
-   dependency-only → record the step + commit, **no agent**.
-6. Otherwise dispatch **`ps5-to-ps6-migrator`** for this project: resolve missing
-   transitive deps (add back only net8-available ones, confirmed by feed-probe),
-   apply KB **code + config** breaking-change fixes, keep building until green or a
-   **hard gap** (a non-Noxum dependency with no net8 build) is reached.
-7. **Record** the per-step `steps.md` block (works / doesn't / why / do). Persist
-   safe package mappings to `mappings.md`; record gaps/blockers + recommendations
-   in `gaps.md`. Append a `cost-ledger.md` row.
+   **Scaffold sanity:** for a known role (Service / RichClient / PublishingService),
+   the project MUST end up with the role's core package set installed. An empty or
+   near-empty `<ItemGroup>` means feed-probe returned no net8 build for the role's
+   core packages — **STOP and report**; do not scaffold an empty project and move
+   on (this is exactly how a "migrated" project ends up with zero packages).
+5. **Build — the mandatory gate.** Run `dotnet build <project>` and read the
+   output. Then apply the **per-project build gate** rule:
+   - **Green** and dependency-only → record + commit, **no agent**.
+   - **Green** and code project → record + commit.
+   - **Red** → the project is **not done**; dispatch the migrator (step 6). The
+     only red state that lets you advance is a recorded **blocker** (a genuine
+     hard gap per the gate rule).
+6. Dispatch **`ps5-to-ps6-migrator`** for a red project: resolve missing transitive
+   deps (add back only net8-available ones, confirmed by feed-probe), apply KB
+   **code + config** breaking-change fixes, keep building until **green** or a
+   **hard gap** (a required non-Noxum dependency with no net8 build) is reached.
+   The migrator returns the final `dotnet build` result and which terminal state
+   it hit. **If it comes back red-but-fixable, re-dispatch — do not accept it as
+   done.**
+7. **Gate decision — record the terminal state.** Confirm the project is green or
+   a recorded blocker, then append the `steps.md` block (works / doesn't / why /
+   do) **including the `dotnet build` result line (exit code + error count) as
+   evidence**. Persist safe package mappings to `mappings.md`; record gaps/blockers
+   + recommendations in `gaps.md`. Append a `cost-ledger.md` row. Tick the project
+   in `plan.md` `## Projects` only now.
 8. Commit per project; update `plan.md` `## Resume`. Hand off if context tight.
+
+**Definition of done (per project) — all four, or it is not done and you may not advance:**
+1. `dotnet build <project>` was run and its output shown.
+2. Result is **green**, or a **blocker** recorded in `gaps.md` with the failing output.
+3. `steps.md` block appended, including the build result line.
+4. Project committed and ticked in `plan.md` `## Projects`.
 
 ### Phase 5 — Report
 Build a `runStatus` JSON (per-project outcome `Raised|Partial|Blocked`, unmapped
